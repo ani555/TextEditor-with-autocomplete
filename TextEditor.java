@@ -4,13 +4,19 @@ import javax.swing.*;
 import javax.swing.text.*;
 import java.util.*;
 import java.io.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 public class TextEditor {
     TrieST trie=new TrieST();
-    private String[] result;
-    private int count=1,spaces,words;
-    int index=0;
+    ArrayList<String> result;
+    private int count=1;
+    int index=0,lastind;
     Object[] data=null;
     JFrame frame;
+    JComboBox<String> fonts;
+    JComboBox<String> themes;
+    String[] themelist={"Default","Ocean Blue","Blood Red","Techie Green"};
+    String[] fontlist=GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
     String text="";
     public class SuggestionPanel {
         private JList list;
@@ -80,7 +86,7 @@ public class TextEditor {
         }
 
         public void moveUp() {
-            int index = Math.min(list.getSelectedIndex() - 1, 0);
+            int index = Math.max(list.getSelectedIndex() - 1, 0);
             selectIndex(index);
         }
 
@@ -103,7 +109,6 @@ public class TextEditor {
 
     private SuggestionPanel suggestion;
     private JTextArea textarea;
-
     protected void showSuggestionLater() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -113,6 +118,38 @@ public class TextEditor {
 
         });
     }
+    public String getLastWord()
+    {
+        String s="";
+        int i=text.length()-1,j;
+        if(i>=1)
+        {
+        while((text.charAt(i)>='a' && text.charAt(i)<='z') && i>1)
+        {
+            i--;
+        }
+        while((text.charAt(i)<'a' || text.charAt(i)>'z') && i>1)
+        {
+            i--;
+        }
+        j=i-1;
+        System.out.println(i+" "+j);
+        if(j>=0)
+        {
+        while(j>=0 &&(text.charAt(j)>='a' && text.charAt(j)<='z'))
+        {
+            j--;
+        }
+        j++;
+        while(j<=i)
+        {
+            s+=text.charAt(j);
+            j++;
+        }
+        }
+       }
+        return s;
+    }    
 
     protected void showSuggestion() {
         hideSuggestion();
@@ -127,29 +164,16 @@ public class TextEditor {
         
         text = textarea.getText();
         text=text.toLowerCase();
-        
-        for(int i=0;i<text.length();i++)
+        String s=getLastWord();
+        if(s!=null)
         {
-            if(text.charAt(i)==' ' || text.charAt(i)=='\n')
+            System.out.println("searching "+s+" "+trie.isPresent(s));
+            if(trie.isPresent(s)==0)
             {
-                text=text.replace('\n',' ');
-                index++;
-                //text=textarea.getText();
-            }
-            
-        }
-        System.out.println("spaces="+index);
-        result=text.split(" ");
-        if(index>0)
-        {
-            System.out.println("searching "+result[index-1]+" "+result[index-1].length());
-            if(trie.search(result[index-1])==0)
-            {
-                System.out.println("inserting "+result[index-1]);
-                trie.insert(result[index-1]);
+                System.out.println("inserting "+s);
+                trie.insert(s);
             }
         }
-        index=0;
         int start = Math.max(0, position - 1);
         while (start > 0) {
             if (!Character.isWhitespace(text.charAt(start))) {
@@ -180,20 +204,33 @@ public class TextEditor {
             suggestion.hide();
         }
     }
-
     protected void buildUI() {
         frame = new JFrame();
         frame.setTitle("TextEditor");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JMenuBar menubar=new JMenuBar();
-        JMenu menu=new JMenu("File");
+        JMenu filemenu=new JMenu("File");
+        JMenu editmenu=new JMenu("Edit");
+        JMenu viewmenu=new JMenu("View"); 
         JMenuItem open=new JMenuItem("Open File");
         JMenuItem save=new JMenuItem("Save");
+        SpinnerModel sizeModel=new SpinnerNumberModel(24,8,100,1);
+        JSpinner fontsize=new JSpinner(sizeModel);
+        fontsize.addChangeListener(new SizeChangeListener());
         open.addActionListener(new LoadFileListener());
         save.addActionListener(new SaveFileListener());
-        menu.add(open);
-        menu.add(save);
-        menubar.add(menu);
+        fonts=new JComboBox<String>(fontlist);
+        fonts.addActionListener(new FontChangeListener());
+        themes=new JComboBox<String>(themelist);
+        themes.addActionListener(new ThemeChangeListener());
+        filemenu.add(open);
+        filemenu.add(save);
+        menubar.add(filemenu);
+        menubar.add(editmenu);
+        menubar.add(viewmenu);
+        menubar.add(fonts);
+        menubar.add(fontsize);
+        menubar.add(themes);
         frame.setJMenuBar(menubar);
         JPanel panel = new JPanel(new BorderLayout());
         textarea = new JTextArea(24, 80);
@@ -243,13 +280,62 @@ public class TextEditor {
 
             }
         });
-        //panel.add(textarea, BorderLayout.CENTER);
-        //frame.add(panel);
         frame.getContentPane().add(panel,BorderLayout.CENTER);
         panel.add(scroller,BorderLayout.CENTER);
         frame.pack();
         frame.setVisible(true);
     }
+    class ThemeChangeListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            JComboBox cb=(JComboBox)e.getSource();
+            String style=(String)cb.getSelectedItem();
+            if(style.equals("Default"))
+            {
+                textarea.setBackground(Color.white);
+                textarea.setForeground(Color.black);
+            }
+            else if(style.equals("Ocean Blue"))
+            {
+                textarea.setBackground(Color.cyan);
+                textarea.setForeground(Color.blue);
+            }
+            else if(style.equals("Blood Red"))
+            {
+                textarea.setBackground(Color.darkGray);
+                textarea.setForeground(Color.red);
+            }
+            else if(style.equals("Techie Green"))
+            {
+                textarea.setBackground(Color.darkGray);
+                textarea.setForeground(Color.green);
+            }
+        }
+    }
+    class FontChangeListener implements ActionListener
+{
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        JComboBox cb=(JComboBox)e.getSource();
+        int size=textarea.getFont().getSize();
+        String fontName=(String)cb.getSelectedItem();
+        textarea.setFont(new Font(fontName,Font.PLAIN,size));
+    }
+}
+class SizeChangeListener implements ChangeListener
+{
+    @Override
+    public void stateChanged(ChangeEvent e)
+    {
+        JSpinner sp=(JSpinner)e.getSource();
+        int sz=(Integer)sp.getValue();
+        Font font=new Font(textarea.getFont().getFontName(),Font.PLAIN,sz);
+        textarea.setFont(font);
+    }
+}
 
     class SaveFileListener implements ActionListener
     {
@@ -300,14 +386,27 @@ public class TextEditor {
         {
             ex.printStackTrace();
         }
-        String[] res=text.split(" ");
-        for(int i=0;i<res.length;i++)
+        updateTrieOnFileOpen(text);
+    }
+    public void updateTrieOnFileOpen(String S)
+    {
+        S=S.toLowerCase();
+        int i=0;
+        String word="";
+        while(i<S.length())
         {
-            if(trie.search(res[i])==0)
+            while(i<S.length() && (S.charAt(i)>='a' && S.charAt(i)<='z'))
             {
-                System.out.println("inserting "+res[i]);
-                trie.insert(res[i]);
+                word+=S.charAt(i); i++;
             }
+            if(trie.isPresent(word)==0)
+            {
+                System.out.println("inserting "+word);
+                trie.insert(word);
+            }
+            word="";
+            while(i<S.length() && (S.charAt(i)<'a' || S.charAt(i)>'z'))
+                i++;
         }
     }
     public static void main(String[] args) {
