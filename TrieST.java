@@ -49,12 +49,11 @@ public class TrieST
         node.value=count;
             
     }
-    public int search(String key)
+    public int isPresent(String key)
     {
         Node x=root;
         int level;
         int index;
-        int flag=0;
         for(level=0;level<key.length();level++)
         {
             index=((int)key.charAt(level)-(int)'a');
@@ -64,7 +63,27 @@ public class TrieST
                 return 0;
             }
                 x=x.next[index];
-            
+        }
+        return 1;
+    }
+    public int search(String key)
+    {
+        str.clear();
+        Node x=root;
+        int level;
+        int index;
+        int flag=0;
+        for(level=0;level<key.length();level++)
+        {
+            index=((int)key.charAt(level)-(int)'a');
+            //System.out.println(index);
+            if(index>26 || index<0)
+                return 0;
+            if(x.next[index]==null)
+            {
+                return 0;
+            }
+                x=x.next[index];
         }
         for(int i=0;i<26;i++)
         {
