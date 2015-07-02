@@ -9,7 +9,6 @@ import javax.swing.event.ChangeListener;
 public class TextEditor {
     TrieST trie=new TrieST();
     ArrayList<String> result;
-    private int count=1;
     int index=0,lastind;
     Object[] data=null;
     JFrame frame;
@@ -45,8 +44,8 @@ public class TextEditor {
         private JList createSuggestionList(final int position, final String subWord) {
             int searchres=trie.search(subWord);
             data=new Object[trie.str.size()+1];
-            //System.out.println("hello ");
-            if(searchres==1)
+            System.out.println("searchres="+searchres+" "+subWord);
+            if(searchres>0)
             {   
                 System.out.println("creating suggestions "+trie.str.size());
             for (int i = 0; i < trie.str.size(); i++) {
@@ -121,7 +120,7 @@ public class TextEditor {
     public String getLastWord()
     {
         String s="";
-        int i=text.length()-1,j;
+        int i=textarea.getCaretPosition()-1,j;
         if(i>=1)
         {
         while((text.charAt(i)>='a' && text.charAt(i)<='z') && i>1)
@@ -154,6 +153,7 @@ public class TextEditor {
     protected void showSuggestion() {
         hideSuggestion();
         final int position = textarea.getCaretPosition();
+        System.out.println("position="+position);
         Point location;
         try {
             location = textarea.modelToView(position).getLocation();
