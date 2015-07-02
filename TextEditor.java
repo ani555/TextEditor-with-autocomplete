@@ -21,6 +21,7 @@ public class TextEditor {
     String[] themelist={"Default","Ocean Blue","Blood Red","Techie Green"};
     String[] fontlist=GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
     String text="";
+    String orgtext="";
     String substr="";
     ArrayList<Integer> wordpos=new ArrayList<Integer>();
     int currpos;
@@ -224,12 +225,14 @@ public class TextEditor {
         JMenuItem open=new JMenuItem("Open File");
         JMenuItem save=new JMenuItem("Save");
         JMenuItem find=new JMenuItem("Find");
+        JMenuItem replace=new JMenuItem("Replace");
         SpinnerModel sizeModel=new SpinnerNumberModel(24,8,100,1);
         JSpinner fontsize=new JSpinner(sizeModel);
         fontsize.addChangeListener(new SizeChangeListener());
         open.addActionListener(new LoadFileListener());
         save.addActionListener(new SaveFileListener());
         find.addActionListener(new FindListener());
+        replace.addActionListener(new ReplaceListener());
         fonts=new JComboBox<String>(fontlist);
         fonts.addActionListener(new FontChangeListener());
         themes=new JComboBox<String>(themelist);
@@ -237,6 +240,7 @@ public class TextEditor {
         filemenu.add(open);
         filemenu.add(save);
         editmenu.add(find);
+        editmenu.add(replace);
         menubar.add(filemenu);
         menubar.add(editmenu);
         menubar.add(viewmenu);
@@ -314,7 +318,7 @@ public class TextEditor {
             {
                 textarea.setBackground(Color.black);
                 textarea.setForeground(Color.cyan);
-                textarea.setCaretColor(Color.blue);
+                textarea.setCaretColor(Color.MAGENTA);
             }
             else if(style.equals("Blood Red"))
             {
@@ -373,6 +377,39 @@ class SizeChangeListener implements ChangeListener
             fileOpen(loadfile.getSelectedFile());
         }
     }
+    class ReplaceListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            JFrame repframe=new JFrame("Replace");
+            JTextField oldtf=new JTextField(20);
+            JLabel oldlb=new JLabel("String to be replaced:");
+            JTextField newtf=new JTextField(20);
+            JLabel newlb=new JLabel("Replacement:");
+            JButton done=new JButton("Done");
+            Box repbox=new Box(BoxLayout.Y_AXIS);
+            repbox.add(oldlb);
+            repbox.add(oldtf);
+            repbox.add(newlb);
+            repbox.add(newtf);
+            repbox.add(done);
+            repframe.getContentPane().add(BorderLayout.CENTER,repbox);
+            repframe.pack();
+            repframe.setVisible(true);
+            done.addActionListener(new ActionListener(){
+                @Override
+                public void actionPerformed(ActionEvent e)
+                {
+                    String oldstr=oldtf.getText();
+                    String newstr=newtf.getText();
+                    orgtext=textarea.getText();
+                    orgtext=orgtext.replaceAll(oldstr, newstr);
+                    textarea.setText(orgtext);
+                }
+            });
+        }
+    }
     class FindListener implements ActionListener
     {
         @Override
@@ -406,8 +443,9 @@ class SizeChangeListener implements ChangeListener
         public void actionPerformed(ActionEvent e)
         {
             textarea.setBackground(textarea.getBackground());
-            textarea.setText(text);
+            textarea.setText(textarea.getText());
             findstr.setText("");
+            currpos=0;
             wordpos.clear();
         }
     }
@@ -448,7 +486,7 @@ class SizeChangeListener implements ChangeListener
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            if(substr!=null && currpos==0 && wordpos.size()!=0)
+            if(substr!=null && wordpos.size()!=0)
             {
             if(currpos+1<wordpos.size())
             currpos++;
@@ -486,6 +524,7 @@ class SizeChangeListener implements ChangeListener
             BufferedReader reader=new BufferedReader(new FileReader(file));
             String textreader="";
             text="";
+            textarea.setText(text);
             while((textreader=reader.readLine())!=null)
             {
                 textarea.append(textreader+"\n");
