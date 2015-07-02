@@ -6,17 +6,24 @@ import java.util.*;
 import java.io.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 public class TextEditor {
     TrieST trie=new TrieST();
     ArrayList<String> result;
     int index=0,lastind;
     Object[] data=null;
     JFrame frame;
+    JTextArea findstr;
     JComboBox<String> fonts;
     JComboBox<String> themes;
     String[] themelist={"Default","Ocean Blue","Blood Red","Techie Green"};
     String[] fontlist=GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
     String text="";
+    String substr="";
+    ArrayList<Integer> wordpos=new ArrayList<Integer>();
+    int currpos;
     public class SuggestionPanel {
         private JList list;
         private JPopupMenu popupMenu;
@@ -121,17 +128,19 @@ public class TextEditor {
     {
         String s="";
         int i=textarea.getCaretPosition()-1,j;
-        if(i>=1)
+        if(i>=0)
         {
-        while((text.charAt(i)>='a' && text.charAt(i)<='z') && i>1)
+        while((text.charAt(i)>='a' && text.charAt(i)<='z') && i>0)
         {
             i--;
         }
-        while((text.charAt(i)<'a' || text.charAt(i)>'z') && i>1)
+        while((text.charAt(i)<'a' || text.charAt(i)>'z') && i>0)
         {
             i--;
         }
         j=i-1;
+        if(i==0) 
+        j=0;
         System.out.println(i+" "+j);
         if(j>=0)
         {
@@ -167,7 +176,7 @@ public class TextEditor {
         String s=getLastWord();
         if(s!=null)
         {
-            System.out.println("searching "+s+" "+trie.isPresent(s));
+            System.out.println("searching "+s+trie.isPresent(s));
             if(trie.isPresent(s)==0)
             {
                 System.out.println("inserting "+s);
@@ -214,17 +223,20 @@ public class TextEditor {
         JMenu viewmenu=new JMenu("View"); 
         JMenuItem open=new JMenuItem("Open File");
         JMenuItem save=new JMenuItem("Save");
+        JMenuItem find=new JMenuItem("Find");
         SpinnerModel sizeModel=new SpinnerNumberModel(24,8,100,1);
         JSpinner fontsize=new JSpinner(sizeModel);
         fontsize.addChangeListener(new SizeChangeListener());
         open.addActionListener(new LoadFileListener());
         save.addActionListener(new SaveFileListener());
+        find.addActionListener(new FindListener());
         fonts=new JComboBox<String>(fontlist);
         fonts.addActionListener(new FontChangeListener());
         themes=new JComboBox<String>(themelist);
         themes.addActionListener(new ThemeChangeListener());
         filemenu.add(open);
         filemenu.add(save);
+        editmenu.add(find);
         menubar.add(filemenu);
         menubar.add(editmenu);
         menubar.add(viewmenu);
@@ -296,21 +308,25 @@ public class TextEditor {
             {
                 textarea.setBackground(Color.white);
                 textarea.setForeground(Color.black);
+                textarea.setCaretColor(Color.black);
             }
             else if(style.equals("Ocean Blue"))
             {
-                textarea.setBackground(Color.cyan);
-                textarea.setForeground(Color.blue);
+                textarea.setBackground(Color.black);
+                textarea.setForeground(Color.cyan);
+                textarea.setCaretColor(Color.blue);
             }
             else if(style.equals("Blood Red"))
             {
-                textarea.setBackground(Color.darkGray);
+                textarea.setBackground(Color.white);
                 textarea.setForeground(Color.red);
+                textarea.setCaretColor(Color.black);
             }
             else if(style.equals("Techie Green"))
             {
-                textarea.setBackground(Color.darkGray);
+                textarea.setBackground(Color.black);
                 textarea.setForeground(Color.green);
+                textarea.setCaretColor(Color.white);
             }
         }
     }
@@ -355,6 +371,100 @@ class SizeChangeListener implements ChangeListener
             JFileChooser loadfile=new JFileChooser();
             loadfile.showOpenDialog(frame);       
             fileOpen(loadfile.getSelectedFile());
+        }
+    }
+    class FindListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            JFrame editFrame=new JFrame("Find");
+            findstr=new JTextArea(1,30);
+            JScrollPane fsscroller=new JScrollPane(findstr);
+            fsscroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+            editFrame.getContentPane().add(fsscroller,BorderLayout.CENTER);
+            FlowLayout flow=new FlowLayout();
+            JPanel buttonpanel=new JPanel(flow);
+            JButton findbt=new JButton("Find");
+            JButton nextoccbt=new JButton("Next");
+            JButton clearbt=new JButton("Clear");
+            findbt.addActionListener(new FindButtonListener());
+            nextoccbt.addActionListener(new NextOccuranceListener());
+            clearbt.addActionListener(new ClearButtonListener());
+            buttonpanel.add(findbt);
+            buttonpanel.add(nextoccbt);
+            buttonpanel.add(clearbt);
+            editFrame.getContentPane().add(buttonpanel,BorderLayout.SOUTH);
+            editFrame.setVisible(true);
+            //editFrame.setSize(300, 300);
+            editFrame.pack();
+        }
+    }
+    class ClearButtonListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            textarea.setBackground(textarea.getBackground());
+            textarea.setText(text);
+            findstr.setText("");
+            wordpos.clear();
+        }
+    }
+    class FindButtonListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            substr=findstr.getText();
+            wordpos.clear();
+            if(substr!=null)
+            {
+            for(int pos=-1;(pos=text.indexOf(substr,pos+1))!=-1;)
+            {
+                System.out.println(pos);
+                wordpos.add(pos);
+            }
+            if(wordpos.size()>0)
+            {
+            int st=wordpos.get(currpos);
+            int fin=st+substr.length();
+            try{
+            Highlighter highlighter=textarea.getHighlighter();
+            HighlightPainter painter = 
+             new DefaultHighlighter.DefaultHighlightPainter(Color.pink);
+            highlighter.addHighlight(st, fin, painter);
+            }
+            catch(BadLocationException ex)
+            {
+                ex.printStackTrace();
+            }
+            }
+            }
+        }
+    } 
+    class NextOccuranceListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            if(substr!=null && currpos==0 && wordpos.size()!=0)
+            {
+            if(currpos+1<wordpos.size())
+            currpos++;
+            int st=wordpos.get(currpos);
+            int fin=st+substr.length();
+            try{
+            Highlighter highlighter=textarea.getHighlighter();
+            HighlightPainter painter = 
+             new DefaultHighlighter.DefaultHighlightPainter(Color.pink);
+            highlighter.addHighlight(st, fin, painter);
+            }
+            catch(BadLocationException ex)
+            {
+                ex.printStackTrace();
+            }   
+            }
         }
     }
     public void fileSave(File file)
