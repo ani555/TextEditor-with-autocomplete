@@ -39,7 +39,8 @@ public class TrieST
         for(level=0;level<key.length();level++)
         {
             index=((int)key.charAt(level)-(int)'a');
-            System.out.println(index);
+            if(index<0 || index>26)
+            return;
             if(node.next[index]==null)
             {
                 node.next[index]=getNode();
@@ -62,9 +63,12 @@ public class TrieST
             {
                 return 0;
             }
-                x=x.next[index];
+            x=x.next[index];
         }
-        return 1;
+        if(x.value==0)
+            return 0;
+        else
+            return 1;
     }
     public int search(String key)
     {
