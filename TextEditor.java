@@ -11,6 +11,7 @@ import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
 public class TextEditor {
     TrieST trie=new TrieST();
+    TrieST dict=new TrieST();
     ArrayList<String> result;
     int index=0,lastind;
     Object[] data=null;
@@ -215,32 +216,47 @@ public class TextEditor {
         }
     }
     protected void buildUI() {
+        populateDict();
         frame = new JFrame();
         frame.setTitle("TextEditor");
+        ImageIcon frameicon=new ImageIcon("TextEditor.png");
+        frame.setIconImage(frameicon.getImage());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JMenuBar menubar=new JMenuBar();
         JMenu filemenu=new JMenu("File");
         JMenu editmenu=new JMenu("Edit");
         JMenu viewmenu=new JMenu("View"); 
-        JMenuItem open=new JMenuItem("Open File");
-        JMenuItem save=new JMenuItem("Save");
-        JMenuItem find=new JMenuItem("Find");
-        JMenuItem replace=new JMenuItem("Replace");
+        ImageIcon openicon=new ImageIcon("Open-file-icon.png");
+        JMenuItem open=new JMenuItem("Open File",openicon);
+        ImageIcon saveicon=new ImageIcon("Save-file-icon.png");
+        JMenuItem save=new JMenuItem("Save",saveicon);
+        ImageIcon clearicon=new ImageIcon("Clear-icon.png");
+        JMenuItem clearhighlights=new JMenuItem("Clear Highlights",clearicon);
+        ImageIcon findicon=new ImageIcon("Find-icon.png");
+        JMenuItem find=new JMenuItem("Find",findicon);
+        ImageIcon replaceicon=new ImageIcon("Replace-icon.png");
+        JMenuItem replace=new JMenuItem("Replace",replaceicon);
+        ImageIcon spellicon=new ImageIcon("Spell-icon.jpg");
+        JMenuItem spellcheck=new JMenuItem("Spell Check",spellicon);
         SpinnerModel sizeModel=new SpinnerNumberModel(24,8,100,1);
         JSpinner fontsize=new JSpinner(sizeModel);
         fontsize.addChangeListener(new SizeChangeListener());
         open.addActionListener(new LoadFileListener());
         save.addActionListener(new SaveFileListener());
+        clearhighlights.addActionListener(new ClearHighlightsListener());
         find.addActionListener(new FindListener());
         replace.addActionListener(new ReplaceListener());
+        spellcheck.addActionListener(new SpellCheckListener());
         fonts=new JComboBox<String>(fontlist);
         fonts.addActionListener(new FontChangeListener());
         themes=new JComboBox<String>(themelist);
         themes.addActionListener(new ThemeChangeListener());
         filemenu.add(open);
         filemenu.add(save);
+        editmenu.add(clearhighlights);
         editmenu.add(find);
         editmenu.add(replace);
+        editmenu.add(spellcheck);
         menubar.add(filemenu);
         menubar.add(editmenu);
         menubar.add(viewmenu);
@@ -377,6 +393,14 @@ class SizeChangeListener implements ChangeListener
             fileOpen(loadfile.getSelectedFile());
         }
     }
+    class ClearHighlightsListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            textarea.setText(textarea.getText());
+        }
+    }
     class ReplaceListener implements ActionListener
     {
         @Override
@@ -455,6 +479,7 @@ class SizeChangeListener implements ChangeListener
         public void actionPerformed(ActionEvent e)
         {
             substr=findstr.getText();
+            substr=substr.toLowerCase();
             wordpos.clear();
             if(substr!=null)
             {
@@ -502,6 +527,42 @@ class SizeChangeListener implements ChangeListener
             {
                 ex.printStackTrace();
             }   
+            }
+        }
+    }
+    class SpellCheckListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            String S=textarea.getText().toLowerCase();
+            int i=0;
+            String word="";
+            while(i<S.length())
+            {
+            while(i<S.length() && (S.charAt(i)>='a' && S.charAt(i)<='z'))
+            {
+                word+=S.charAt(i); i++;
+            }
+            if(dict.isPresent(word)==0)
+            {
+                System.out.println("not in dict "+word);
+                int fin=i;
+                int st=fin-word.length();
+                try
+                {
+                Highlighter highlighter=textarea.getHighlighter();
+                HighlightPainter painter=new DefaultHighlighter.DefaultHighlightPainter(Color.yellow);
+                highlighter.addHighlight(st, fin, painter);
+                }
+                catch(BadLocationException ex)
+                {
+                    ex.printStackTrace();
+                }
+            }
+            word="";
+            while(i<S.length() && (S.charAt(i)<'a' || S.charAt(i)>'z'))
+                i++;
             }
         }
     }
@@ -558,7 +619,25 @@ class SizeChangeListener implements ChangeListener
                 i++;
         }
     }
+    private void populateDict()
+    {
+        String word="";
+        try
+        {
+        BufferedReader reader=new BufferedReader(new FileReader("Dictionary.txt"));
+        while((word=reader.readLine())!=null)
+        {
+            dict.insert(word);
+        }
+        }
+        catch(Exception e)
+        {
+            System.out.println(word);
+            e.printStackTrace();
+        }
+    }
     public static void main(String[] args) {
+        
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException e) {
