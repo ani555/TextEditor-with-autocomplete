@@ -9,7 +9,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
-public class TextEditorNew {
+public class TextEditor {
     ArrayList<TrieST> trie=new ArrayList<TrieST>();
     TrieST dict=new TrieST();
     ArrayList<String> result;
@@ -823,7 +823,7 @@ public void highlightText(String text,String word)
 
             @Override
             public void run() {
-                new TextEditorNew().buildUI();
+                new TextEditor().buildUI();
             }
         });
     }
