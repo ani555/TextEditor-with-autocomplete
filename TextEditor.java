@@ -9,22 +9,28 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
-public class TextEditor {
-    TrieST trie=new TrieST();
+public class TextEditorNew {
+    ArrayList<TrieST> trie=new ArrayList<TrieST>();
     TrieST dict=new TrieST();
     ArrayList<String> result;
     int index=0,lastind;
     Object[] data=null;
     JFrame frame;
     JTextArea findstr;
+    JScrollPane scroller;
+    JTabbedPane jtp;
+    int tabs;
     JComboBox<String> fonts;
     JComboBox<String> themes;
+    JSpinner fontsize;
     String[] themelist={"Default","Ocean Blue","Blood Red","Techie Green"};
     String[] fontlist=GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
     String text="";
     String orgtext="";
     String substr="";
     ArrayList<Integer> wordpos=new ArrayList<Integer>();
+    ArrayList<String> textthemes=new ArrayList<String>();
+    ArrayList<Integer> fontindex=new ArrayList<Integer>();
     int currpos;
     public class SuggestionPanel {
         private JList list;
@@ -51,18 +57,18 @@ public class TextEditor {
         }
 
         private JList createSuggestionList(final int position, final String subWord) {
-            int searchres=trie.search(subWord);
-            data=new Object[trie.str.size()+1];
+            int searchres=trie.get(jtp.getSelectedIndex()).search(subWord);
+            data=new Object[trie.get(jtp.getSelectedIndex()).str.size()+1];
             System.out.println("searchres="+searchres+" "+subWord);
             if(searchres>0)
             {   
-                System.out.println("creating suggestions "+trie.str.size());
-            for (int i = 0; i < trie.str.size(); i++) {
+                System.out.println("creating suggestions "+trie.get(jtp.getSelectedIndex()).str.size());
+            for (int i = 0; i < trie.get(jtp.getSelectedIndex()).str.size(); i++) {
                 
-                System.out.println(trie.str.get(i));
-                    data[i]=trie.str.get(i);
+                System.out.println(trie.get(jtp.getSelectedIndex()).str.get(i));
+                    data[i]=trie.get(jtp.getSelectedIndex()).str.get(i);
             }
-            trie.str.clear();
+            trie.get(jtp.getSelectedIndex()).str.clear();
             }
             JList list = new JList(data);  
             list.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
@@ -83,7 +89,7 @@ public class TextEditor {
             if (list.getSelectedValue() != null) {
                 try {
                     final String selectedSuggestion = ((String) list.getSelectedValue()).substring(subWord.length());
-                    textarea.getDocument().insertString(insertionPosition, selectedSuggestion, null);
+                    textarea.get(jtp.getSelectedIndex()).getDocument().insertString(insertionPosition, selectedSuggestion, null);
                     return true;
                 } catch (BadLocationException e1) {
                     e1.printStackTrace();
@@ -104,19 +110,19 @@ public class TextEditor {
         }
 
         private void selectIndex(int index) {
-            final int position = textarea.getCaretPosition();
+            final int position = textarea.get(jtp.getSelectedIndex()).getCaretPosition();
             list.setSelectedIndex(index);
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    textarea.setCaretPosition(position);
+                    textarea.get(jtp.getSelectedIndex()).setCaretPosition(position);
                 };
             });
         }
     }
 
     private SuggestionPanel suggestion;
-    private JTextArea textarea;
+    private ArrayList<JTextArea> textarea=new ArrayList<JTextArea>();
     protected void showSuggestionLater() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -129,7 +135,7 @@ public class TextEditor {
     public String getLastWord()
     {
         String s="";
-        int i=textarea.getCaretPosition()-1,j;
+        int i=textarea.get(jtp.getSelectedIndex()).getCaretPosition()-1,j;
         if(i>=0)
         {
         while((text.charAt(i)>='a' && text.charAt(i)<='z') && i>0)
@@ -163,26 +169,27 @@ public class TextEditor {
 
     protected void showSuggestion() {
         hideSuggestion();
-        final int position = textarea.getCaretPosition();
+        final int position = textarea.get(jtp.getSelectedIndex()).getCaretPosition();
         System.out.println("position="+position);
         Point location;
         try {
-            location = textarea.modelToView(position).getLocation();
+            location = textarea.get(jtp.getSelectedIndex()).modelToView(position).getLocation();
         } catch (BadLocationException e2) {
             e2.printStackTrace();
             return;
         }
         
-        text = textarea.getText();
+        text = textarea.get(jtp.getSelectedIndex()).getText();
         text=text.toLowerCase();
         String s=getLastWord();
+        System.out.println(s);
         if(s!=null)
         {
-            System.out.println("searching "+s+trie.isPresent(s));
-            if(trie.isPresent(s)==0)
+            System.out.println("searching "+s+trie.get(jtp.getSelectedIndex()).isPresent(s));
+            if(trie.get(jtp.getSelectedIndex()).isPresent(s)==0)
             {
                 System.out.println("inserting "+s);
-                trie.insert(s);
+                trie.get(jtp.getSelectedIndex()).insert(s);
             }
         }
         int start = Math.max(0, position - 1);
@@ -201,11 +208,11 @@ public class TextEditor {
         if (subWord.length() < 2) {
             return;
         }
-        suggestion = new SuggestionPanel(textarea, position, subWord, location);
+        suggestion = new SuggestionPanel(textarea.get(jtp.getSelectedIndex()), position, subWord, location);
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                textarea.requestFocusInWindow();
+                textarea.get(jtp.getSelectedIndex()).requestFocusInWindow();
             }
         });
     }
@@ -226,6 +233,9 @@ public class TextEditor {
         JMenu filemenu=new JMenu("File");
         JMenu editmenu=new JMenu("Edit");
         JMenu viewmenu=new JMenu("View"); 
+        JMenu appmenu=new JMenu("Tools");
+        ImageIcon newfileicon=new ImageIcon("NewFile-icon.png");
+        JMenuItem newfile=new JMenuItem("New File",newfileicon);
         ImageIcon openicon=new ImageIcon("Open-file-icon.png");
         JMenuItem open=new JMenuItem("Open File",openicon);
         ImageIcon saveicon=new ImageIcon("Save-file-icon.png");
@@ -238,39 +248,75 @@ public class TextEditor {
         JMenuItem replace=new JMenuItem("Replace",replaceicon);
         ImageIcon spellicon=new ImageIcon("Spell-icon.jpg");
         JMenuItem spellcheck=new JMenuItem("Spell Check",spellicon);
+        JMenuItem lrsapp=new JMenuItem("Longest Repeated Substring");
+        JMenuItem lpsapp=new JMenuItem("Longest Palindromic Substring");
         SpinnerModel sizeModel=new SpinnerNumberModel(24,8,100,1);
-        JSpinner fontsize=new JSpinner(sizeModel);
+        fontsize=new JSpinner(sizeModel);
         fontsize.addChangeListener(new SizeChangeListener());
+        newfile.addActionListener(new NewFileListener());
         open.addActionListener(new LoadFileListener());
         save.addActionListener(new SaveFileListener());
         clearhighlights.addActionListener(new ClearHighlightsListener());
         find.addActionListener(new FindListener());
         replace.addActionListener(new ReplaceListener());
         spellcheck.addActionListener(new SpellCheckListener());
+        lrsapp.addActionListener(new LRSListener());
+        lpsapp.addActionListener(new LPSListener());
         fonts=new JComboBox<String>(fontlist);
         fonts.addActionListener(new FontChangeListener());
         themes=new JComboBox<String>(themelist);
         themes.addActionListener(new ThemeChangeListener());
+        filemenu.add(newfile);
         filemenu.add(open);
         filemenu.add(save);
         editmenu.add(clearhighlights);
         editmenu.add(find);
         editmenu.add(replace);
         editmenu.add(spellcheck);
+        appmenu.add(lrsapp);
+        appmenu.add(lpsapp);
         menubar.add(filemenu);
         menubar.add(editmenu);
         menubar.add(viewmenu);
+        menubar.add(appmenu);
         menubar.add(fonts);
         menubar.add(fontsize);
         menubar.add(themes);
         frame.setJMenuBar(menubar);
+        jtp=new JTabbedPane();
+        jtp.addChangeListener(new ChangeListener(){
+           @Override
+           public void stateChanged(ChangeEvent e)
+           {
+               if(jtp.getSelectedIndex()>=0)
+               {
+                System.out.println(fontindex.get(jtp.getSelectedIndex()));
+                System.out.println(jtp.getSelectedIndex());
+                fonts.setSelectedIndex(fontindex.get(jtp.getSelectedIndex()));
+                fontsize.setValue(textarea.get(jtp.getSelectedIndex()).getFont().getSize());
+                themes.setSelectedItem(textthemes.get(jtp.getSelectedIndex()));
+               }
+           }
+        });
+        //System.out.println(jtp.getTabCount());
+        frame.getContentPane().add(jtp,BorderLayout.CENTER);
+        frame.setSize(600,500);
+        //frame.pack();
+        frame.setVisible(true);
+    }
+    public JPanel buildTextPanel()
+    {
+        trie.add(new TrieST());
         JPanel panel = new JPanel(new BorderLayout());
-        textarea = new JTextArea(24, 80);
-        JScrollPane scroller=new JScrollPane(textarea);
+        textarea.add(new JTextArea(24, 80));
+        textthemes.add("Default");
+        fontindex.add(0);
+        scroller=new JScrollPane(textarea.get(tabs));
         scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        textarea.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
-        textarea.addKeyListener(new KeyListener() {
+        panel.add(scroller,BorderLayout.CENTER);
+        textarea.get(tabs).setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
+        textarea.get(tabs).addKeyListener(new KeyListener() {
 
             @Override
             public void keyTyped(KeyEvent e) {
@@ -278,12 +324,12 @@ public class TextEditor {
                     if (suggestion != null) {
                         if (suggestion.insertSelection()) {
                             e.consume();
-                            final int position = textarea.getCaretPosition();
+                            final int position = textarea.get(jtp.getSelectedIndex()).getCaretPosition();
                             SwingUtilities.invokeLater(new Runnable() {
                                 @Override
                                 public void run() {
                                     try {
-                                        textarea.getDocument().remove(position - 1, 1);
+                                        textarea.get(jtp.getSelectedIndex()).getDocument().remove(position - 1, 1); //removes the "\n" on suggestion selection
                                     } catch (BadLocationException e) {
                                         e.printStackTrace();
                                     }
@@ -312,12 +358,55 @@ public class TextEditor {
 
             }
         });
-        frame.getContentPane().add(panel,BorderLayout.CENTER);
-        panel.add(scroller,BorderLayout.CENTER);
-        frame.pack();
-        frame.setVisible(true);
+        return panel;
     }
-    class ThemeChangeListener implements ActionListener
+class CloseTabButton extends JPanel implements ActionListener {
+  private JTabbedPane pane;
+  public CloseTabButton(JTabbedPane pane, int index) {
+    this.pane = pane;
+    setOpaque(false);
+    add(new JLabel(
+        pane.getTitleAt(index),
+        pane.getIconAt(index),
+        JLabel.LEFT));
+    Icon closeIcon = new CrossIcon();
+    JButton btClose = new JButton(closeIcon);
+    btClose.setPreferredSize(new Dimension(
+        closeIcon.getIconWidth(), closeIcon.getIconHeight()));
+    add(btClose);
+    btClose.addActionListener(this);
+    pane.setTabComponentAt(index, this);
+  }
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    int i = pane.indexOfTabComponent(this);
+    if (i != -1) {
+      pane.remove(i);
+      trie.remove(i);
+      textarea.remove(i);
+      textthemes.remove(i);
+      fontindex.remove(i);
+    }
+  }
+}
+
+class CrossIcon implements Icon {
+  @Override
+  public void paintIcon(Component c, Graphics g, int x, int y) {
+    g.setColor(Color.RED);
+    g.drawLine(6, 6, getIconWidth() - 7, getIconHeight() - 7);
+    g.drawLine(getIconWidth() - 7, 6, 6, getIconHeight() - 7);
+  }
+  @Override
+  public int getIconWidth() {
+    return 17;
+  }
+  @Override
+  public int getIconHeight() {
+    return 17;
+  }
+}
+class ThemeChangeListener implements ActionListener
     {
         @Override
         public void actionPerformed(ActionEvent e)
@@ -326,27 +415,35 @@ public class TextEditor {
             String style=(String)cb.getSelectedItem();
             if(style.equals("Default"))
             {
-                textarea.setBackground(Color.white);
-                textarea.setForeground(Color.black);
-                textarea.setCaretColor(Color.black);
+                textarea.get(jtp.getSelectedIndex()).setBackground(Color.white);
+                textarea.get(jtp.getSelectedIndex()).setForeground(Color.black);
+                textarea.get(jtp.getSelectedIndex()).setCaretColor(Color.black);
+                textthemes.remove(jtp.getSelectedIndex());
+                textthemes.add(jtp.getSelectedIndex(), "Default");
             }
             else if(style.equals("Ocean Blue"))
             {
-                textarea.setBackground(Color.black);
-                textarea.setForeground(Color.cyan);
-                textarea.setCaretColor(Color.MAGENTA);
+                textarea.get(jtp.getSelectedIndex()).setBackground(Color.black);
+                textarea.get(jtp.getSelectedIndex()).setForeground(Color.cyan);
+                textarea.get(jtp.getSelectedIndex()).setCaretColor(Color.MAGENTA);
+                textthemes.remove(jtp.getSelectedIndex());
+                textthemes.add(jtp.getSelectedIndex(), "Ocean Blue");
             }
             else if(style.equals("Blood Red"))
             {
-                textarea.setBackground(Color.white);
-                textarea.setForeground(Color.red);
-                textarea.setCaretColor(Color.black);
+                textarea.get(jtp.getSelectedIndex()).setBackground(Color.white);
+                textarea.get(jtp.getSelectedIndex()).setForeground(Color.red);
+                textarea.get(jtp.getSelectedIndex()).setCaretColor(Color.black);
+                textthemes.remove(jtp.getSelectedIndex());
+                textthemes.add(jtp.getSelectedIndex(), "Blood Red");
             }
             else if(style.equals("Techie Green"))
             {
-                textarea.setBackground(Color.black);
-                textarea.setForeground(Color.green);
-                textarea.setCaretColor(Color.white);
+                textarea.get(jtp.getSelectedIndex()).setBackground(Color.black);
+                textarea.get(jtp.getSelectedIndex()).setForeground(Color.green);
+                textarea.get(jtp.getSelectedIndex()).setCaretColor(Color.white);
+                textthemes.remove(jtp.getSelectedIndex());
+                textthemes.add(jtp.getSelectedIndex(), "Techie Green");
             }
         }
     }
@@ -356,9 +453,11 @@ public class TextEditor {
     public void actionPerformed(ActionEvent e)
     {
         JComboBox cb=(JComboBox)e.getSource();
-        int size=textarea.getFont().getSize();
+        int size=textarea.get(jtp.getSelectedIndex()).getFont().getSize();
         String fontName=(String)cb.getSelectedItem();
-        textarea.setFont(new Font(fontName,Font.PLAIN,size));
+        textarea.get(jtp.getSelectedIndex()).setFont(new Font(fontName,Font.PLAIN,size));
+        fontindex.remove(jtp.getSelectedIndex());
+        fontindex.add(jtp.getSelectedIndex(),cb.getSelectedIndex());
     }
 }
 class SizeChangeListener implements ChangeListener
@@ -368,11 +467,10 @@ class SizeChangeListener implements ChangeListener
     {
         JSpinner sp=(JSpinner)e.getSource();
         int sz=(Integer)sp.getValue();
-        Font font=new Font(textarea.getFont().getFontName(),Font.PLAIN,sz);
-        textarea.setFont(font);
+        Font font=new Font(textarea.get(jtp.getSelectedIndex()).getFont().getFontName(),Font.PLAIN,sz);
+        textarea.get(jtp.getSelectedIndex()).setFont(font);
     }
 }
-
     class SaveFileListener implements ActionListener
     {
         @Override
@@ -393,12 +491,21 @@ class SizeChangeListener implements ChangeListener
             fileOpen(loadfile.getSelectedFile());
         }
     }
+    class NewFileListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            String tabname="untitled";
+            createNewTab(tabname);
+        }
+    }
     class ClearHighlightsListener implements ActionListener
     {
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            textarea.setText(textarea.getText());
+            textarea.get(jtp.getSelectedIndex()).setText(textarea.get(jtp.getSelectedIndex()).getText());
         }
     }
     class ReplaceListener implements ActionListener
@@ -427,9 +534,9 @@ class SizeChangeListener implements ChangeListener
                 {
                     String oldstr=oldtf.getText();
                     String newstr=newtf.getText();
-                    orgtext=textarea.getText();
+                    orgtext=textarea.get(jtp.getSelectedIndex()).getText();
                     orgtext=orgtext.replaceAll(oldstr, newstr);
-                    textarea.setText(orgtext);
+                    textarea.get(jtp.getSelectedIndex()).setText(orgtext);
                 }
             });
         }
@@ -446,9 +553,24 @@ class SizeChangeListener implements ChangeListener
             editFrame.getContentPane().add(fsscroller,BorderLayout.CENTER);
             FlowLayout flow=new FlowLayout();
             JPanel buttonpanel=new JPanel(flow);
-            JButton findbt=new JButton("Find");
+            JButton findbt=new JButton("Find");      
+            findbt.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent mEvt) {
+            findbt.setToolTipText("Find first occurance of substring");
+            }});
             JButton nextoccbt=new JButton("Next");
+            nextoccbt.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent mEvt) {
+            nextoccbt.setToolTipText("Next occurance of substring");
+            }});
             JButton clearbt=new JButton("Clear");
+            clearbt.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent mEvt) {
+            clearbt.setToolTipText("Clear Highlights");
+            }});
             findbt.addActionListener(new FindButtonListener());
             nextoccbt.addActionListener(new NextOccuranceListener());
             clearbt.addActionListener(new ClearButtonListener());
@@ -466,8 +588,8 @@ class SizeChangeListener implements ChangeListener
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            textarea.setBackground(textarea.getBackground());
-            textarea.setText(textarea.getText());
+            textarea.get(jtp.getSelectedIndex()).setBackground(textarea.get(jtp.getSelectedIndex()).getBackground());
+            textarea.get(jtp.getSelectedIndex()).setText(textarea.get(jtp.getSelectedIndex()).getText());
             findstr.setText("");
             currpos=0;
             wordpos.clear();
@@ -479,11 +601,12 @@ class SizeChangeListener implements ChangeListener
         public void actionPerformed(ActionEvent e)
         {
             substr=findstr.getText();
-            substr=substr.toLowerCase();
             wordpos.clear();
-            if(substr!=null)
+            System.out.println(substr.length());
+            String S=textarea.get(jtp.getSelectedIndex()).getText();
+            if(substr.length()!=0 && S.length()!=0)
             {
-            for(int pos=-1;(pos=text.indexOf(substr,pos+1))!=-1;)
+            for(int pos=-1;(pos=S.indexOf(substr,pos+1))!=-1;)
             {
                 System.out.println(pos);
                 wordpos.add(pos);
@@ -493,7 +616,7 @@ class SizeChangeListener implements ChangeListener
             int st=wordpos.get(currpos);
             int fin=st+substr.length();
             try{
-            Highlighter highlighter=textarea.getHighlighter();
+            Highlighter highlighter=textarea.get(jtp.getSelectedIndex()).getHighlighter();
             HighlightPainter painter = 
              new DefaultHighlighter.DefaultHighlightPainter(Color.pink);
             highlighter.addHighlight(st, fin, painter);
@@ -511,14 +634,14 @@ class SizeChangeListener implements ChangeListener
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            if(substr!=null && wordpos.size()!=0)
+            if(substr.length()!=0 && wordpos.size()!=0 && textarea.get(jtp.getSelectedIndex()).getText().length()!=0)
             {
             if(currpos+1<wordpos.size())
             currpos++;
             int st=wordpos.get(currpos);
             int fin=st+substr.length();
             try{
-            Highlighter highlighter=textarea.getHighlighter();
+            Highlighter highlighter=textarea.get(jtp.getSelectedIndex()).getHighlighter();
             HighlightPainter painter = 
              new DefaultHighlighter.DefaultHighlightPainter(Color.pink);
             highlighter.addHighlight(st, fin, painter);
@@ -535,7 +658,7 @@ class SizeChangeListener implements ChangeListener
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            String S=textarea.getText().toLowerCase();
+            String S=textarea.get(jtp.getSelectedIndex()).getText().toLowerCase();
             int i=0;
             String word="";
             while(i<S.length())
@@ -551,7 +674,7 @@ class SizeChangeListener implements ChangeListener
                 int st=fin-word.length();
                 try
                 {
-                Highlighter highlighter=textarea.getHighlighter();
+                Highlighter highlighter=textarea.get(jtp.getSelectedIndex()).getHighlighter();
                 HighlightPainter painter=new DefaultHighlighter.DefaultHighlightPainter(Color.yellow);
                 highlighter.addHighlight(st, fin, painter);
                 }
@@ -566,12 +689,57 @@ class SizeChangeListener implements ChangeListener
             }
         }
     }
+    class LRSListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            orgtext=textarea.get(jtp.getSelectedIndex()).getText();
+            String lrs=LRS.lrs(orgtext);    
+            highlightText(orgtext,lrs);
+            JOptionPane.showMessageDialog(frame,"Longest Repeated Substring is:"+lrs);
+        }
+    }
+class LPSListener implements ActionListener
+{
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        orgtext=textarea.get(jtp.getSelectedIndex()).getText();
+        String lps=LPS.longestPalindrome(orgtext);
+        highlightText(orgtext,lps);
+        JOptionPane.showMessageDialog(frame,"Longest Palindromic Substring is:"+lps);
+    }
+}
+public void highlightText(String text,String word)
+    {
+        for(int pos=-1;(pos=text.indexOf(word,pos+1))!=-1;)
+            {
+                try{
+                Highlighter highlighter=textarea.get(jtp.getSelectedIndex()).getHighlighter();
+                HighlightPainter painter=new DefaultHighlighter.DefaultHighlightPainter(Color.orange);
+                highlighter.addHighlight(pos, pos+word.length(), painter);
+                System.out.println("pos="+pos+word);
+                }
+                catch(BadLocationException ex)
+                {
+                    ex.printStackTrace();
+                }    
+            }
+    }
+    public void createNewTab(String tabname)
+    {
+            tabs=jtp.getTabCount();
+            jtp.add(tabname,buildTextPanel());
+            //System.out.println(jtp.getTabCount());
+            new CloseTabButton(jtp,tabs);
+    }
     public void fileSave(File file)
     {
         try
         {
             BufferedWriter writer=new BufferedWriter(new FileWriter(file));
-            writer.write(textarea.getText());
+            writer.write(textarea.get(jtp.getSelectedIndex()).getText());
             writer.close();
         }catch(IOException ex)
         {
@@ -582,13 +750,14 @@ class SizeChangeListener implements ChangeListener
     {
         try
         {
+            createNewTab(file.getName());
             BufferedReader reader=new BufferedReader(new FileReader(file));
             String textreader="";
             text="";
-            textarea.setText(text);
+            textarea.get(tabs).setText(text);
             while((textreader=reader.readLine())!=null)
             {
-                textarea.append(textreader+"\n");
+                textarea.get(tabs).append(textreader+"\n");
                 text+=textreader;
                 text+=" ";
             }
@@ -598,6 +767,7 @@ class SizeChangeListener implements ChangeListener
         }
         updateTrieOnFileOpen(text);
     }
+    
     public void updateTrieOnFileOpen(String S)
     {
         S=S.toLowerCase();
@@ -609,10 +779,10 @@ class SizeChangeListener implements ChangeListener
             {
                 word+=S.charAt(i); i++;
             }
-            if(trie.isPresent(word)==0)
+            if(trie.get(tabs).isPresent(word)==0)
             {
                 System.out.println("inserting "+word);
-                trie.insert(word);
+                trie.get(tabs).insert(word);
             }
             word="";
             while(i<S.length() && (S.charAt(i)<'a' || S.charAt(i)>'z'))
@@ -653,7 +823,7 @@ class SizeChangeListener implements ChangeListener
 
             @Override
             public void run() {
-                new TextEditor().buildUI();
+                new TextEditorNew().buildUI();
             }
         });
     }
