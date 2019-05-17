@@ -59,13 +59,13 @@ public class TextEditor {
         private JList createSuggestionList(final int position, final String subWord) {
             int searchres=trie.get(jtp.getSelectedIndex()).search(subWord);
             data=new Object[trie.get(jtp.getSelectedIndex()).str.size()+1];
-            System.out.println("searchres="+searchres+" "+subWord);
+            // System.out.println("searchres="+searchres+" "+subWord);
             if(searchres>0)
             {   
-                System.out.println("creating suggestions "+trie.get(jtp.getSelectedIndex()).str.size());
+                // System.out.println("creating suggestions "+trie.get(jtp.getSelectedIndex()).str.size());
             for (int i = 0; i < trie.get(jtp.getSelectedIndex()).str.size(); i++) {
                 
-                System.out.println(trie.get(jtp.getSelectedIndex()).str.get(i));
+                // System.out.println(trie.get(jtp.getSelectedIndex()).str.get(i));
                     data[i]=trie.get(jtp.getSelectedIndex()).str.get(i);
             }
             trie.get(jtp.getSelectedIndex()).str.clear();
@@ -149,7 +149,7 @@ public class TextEditor {
         j=i-1;
         if(i==0) 
         j=0;
-        System.out.println(i+" "+j);
+        // System.out.println(i+" "+j);
         if(j>=0)
         {
         while(j>=0 &&(text.charAt(j)>='a' && text.charAt(j)<='z'))
@@ -170,7 +170,7 @@ public class TextEditor {
     protected void showSuggestion() {
         hideSuggestion();
         final int position = textarea.get(jtp.getSelectedIndex()).getCaretPosition();
-        System.out.println("position="+position);
+        // System.out.println("position="+position);
         Point location;
         try {
             location = textarea.get(jtp.getSelectedIndex()).modelToView(position).getLocation();
@@ -182,13 +182,13 @@ public class TextEditor {
         text = textarea.get(jtp.getSelectedIndex()).getText();
         text=text.toLowerCase();
         String s=getLastWord();
-        System.out.println(s);
+        // System.out.println(s);
         if(s!=null)
         {
-            System.out.println("searching "+s+trie.get(jtp.getSelectedIndex()).isPresent(s));
+            // System.out.println("searching "+s+trie.get(jtp.getSelectedIndex()).isPresent(s));
             if(trie.get(jtp.getSelectedIndex()).isPresent(s)==0)
             {
-                System.out.println("inserting "+s);
+                // System.out.println("inserting "+s);
                 trie.get(jtp.getSelectedIndex()).insert(s);
             }
         }
@@ -226,27 +226,26 @@ public class TextEditor {
         populateDict();
         frame = new JFrame();
         frame.setTitle("TextEditor");
-        ImageIcon frameicon=new ImageIcon("TextEditor.png");
+        ImageIcon frameicon=new ImageIcon("img/TextEditor.png");
         frame.setIconImage(frameicon.getImage());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JMenuBar menubar=new JMenuBar();
         JMenu filemenu=new JMenu("File");
-        JMenu editmenu=new JMenu("Edit");
-        JMenu viewmenu=new JMenu("View"); 
+        JMenu editmenu=new JMenu("Edit"); 
         JMenu appmenu=new JMenu("Tools");
-        ImageIcon newfileicon=new ImageIcon("NewFile-icon.png");
+        ImageIcon newfileicon=new ImageIcon("img/NewFile-icon.png");
         JMenuItem newfile=new JMenuItem("New File",newfileicon);
-        ImageIcon openicon=new ImageIcon("Open-file-icon.png");
+        ImageIcon openicon=new ImageIcon("img/Open-file-icon.png");
         JMenuItem open=new JMenuItem("Open File",openicon);
-        ImageIcon saveicon=new ImageIcon("Save-file-icon.png");
+        ImageIcon saveicon=new ImageIcon("img/Save-file-icon.png");
         JMenuItem save=new JMenuItem("Save",saveicon);
-        ImageIcon clearicon=new ImageIcon("Clear-icon.png");
+        ImageIcon clearicon=new ImageIcon("img/Clear-icon.png");
         JMenuItem clearhighlights=new JMenuItem("Clear Highlights",clearicon);
-        ImageIcon findicon=new ImageIcon("Find-icon.png");
+        ImageIcon findicon=new ImageIcon("img/Find-icon.png");
         JMenuItem find=new JMenuItem("Find",findicon);
-        ImageIcon replaceicon=new ImageIcon("Replace-icon.png");
+        ImageIcon replaceicon=new ImageIcon("img/Replace-icon.png");
         JMenuItem replace=new JMenuItem("Replace",replaceicon);
-        ImageIcon spellicon=new ImageIcon("Spell-icon.jpg");
+        ImageIcon spellicon=new ImageIcon("img/Spell-icon.jpg");
         JMenuItem spellcheck=new JMenuItem("Spell Check",spellicon);
         JMenuItem lrsapp=new JMenuItem("Longest Repeated Substring");
         JMenuItem lpsapp=new JMenuItem("Longest Palindromic Substring");
@@ -277,7 +276,6 @@ public class TextEditor {
         appmenu.add(lpsapp);
         menubar.add(filemenu);
         menubar.add(editmenu);
-        menubar.add(viewmenu);
         menubar.add(appmenu);
         menubar.add(fonts);
         menubar.add(fontsize);
@@ -290,8 +288,8 @@ public class TextEditor {
            {
                if(jtp.getSelectedIndex()>=0)
                {
-                System.out.println(fontindex.get(jtp.getSelectedIndex()));
-                System.out.println(jtp.getSelectedIndex());
+                // System.out.println(fontindex.get(jtp.getSelectedIndex()));
+                // System.out.println(jtp.getSelectedIndex());
                 fonts.setSelectedIndex(fontindex.get(jtp.getSelectedIndex()));
                 fontsize.setValue(textarea.get(jtp.getSelectedIndex()).getFont().getSize());
                 themes.setSelectedItem(textthemes.get(jtp.getSelectedIndex()));
@@ -602,13 +600,13 @@ class SizeChangeListener implements ChangeListener
         {
             substr=findstr.getText();
             wordpos.clear();
-            System.out.println(substr.length());
+            // System.out.println(substr.length());
             String S=textarea.get(jtp.getSelectedIndex()).getText();
             if(substr.length()!=0 && S.length()!=0)
             {
             for(int pos=-1;(pos=S.indexOf(substr,pos+1))!=-1;)
             {
-                System.out.println(pos);
+                // System.out.println(pos);
                 wordpos.add(pos);
             }
             if(wordpos.size()>0)
@@ -669,7 +667,7 @@ class SizeChangeListener implements ChangeListener
             }
             if(dict.isPresent(word)==0)
             {
-                System.out.println("not in dict "+word);
+                // System.out.println("not in dict "+word);
                 int fin=i;
                 int st=fin-word.length();
                 try
@@ -719,7 +717,7 @@ public void highlightText(String text,String word)
                 Highlighter highlighter=textarea.get(jtp.getSelectedIndex()).getHighlighter();
                 HighlightPainter painter=new DefaultHighlighter.DefaultHighlightPainter(Color.orange);
                 highlighter.addHighlight(pos, pos+word.length(), painter);
-                System.out.println("pos="+pos+word);
+                // System.out.println("pos="+pos+word);
                 }
                 catch(BadLocationException ex)
                 {
@@ -781,7 +779,7 @@ public void highlightText(String text,String word)
             }
             if(trie.get(tabs).isPresent(word)==0)
             {
-                System.out.println("inserting "+word);
+                // System.out.println("inserting "+word);
                 trie.get(tabs).insert(word);
             }
             word="";
@@ -794,7 +792,7 @@ public void highlightText(String text,String word)
         String word="";
         try
         {
-        BufferedReader reader=new BufferedReader(new FileReader("Dictionary.txt"));
+        BufferedReader reader=new BufferedReader(new FileReader("res/Dictionary.txt"));
         while((word=reader.readLine())!=null)
         {
             dict.insert(word);
@@ -802,7 +800,7 @@ public void highlightText(String text,String word)
         }
         catch(Exception e)
         {
-            System.out.println(word);
+            // System.out.println(word);
             e.printStackTrace();
         }
     }

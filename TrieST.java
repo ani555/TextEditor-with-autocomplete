@@ -112,7 +112,7 @@ public class TrieST
         if(x.value!=0 && level>pre)
         {
             str.add(key);
-            System.out.println("Dict:"+key);
+            // System.out.println("Dict:"+key);
         }
         for(int i=0;i<26;i++)
         {

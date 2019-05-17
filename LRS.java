@@ -22,7 +22,7 @@ class LRS {
         String lrs="";
         for(int i=0;i<N-1;i++)
         {
-            System.out.println("suffix-"+suffixes[i]);
+            // System.out.println("suffix-"+suffixes[i]);
             String x=lcp(suffixes[i],suffixes[i+1]);
             if(x.length()>lrs.length())
                 lrs=x;
