@@ -6,7 +6,7 @@ Implementation of a basic text editor using java swing gui. Key features:
 2. Find and Replace
 3. Spell Check
 4. Longest Repeated Substring
-5. Logest Palindromic Substring
+5. Longest Palindromic Substring
 
 ## Build instructions:
 Run the Makefile provided. Requires OpenJDK version >= 1.8.
