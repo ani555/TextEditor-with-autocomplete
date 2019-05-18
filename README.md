@@ -25,3 +25,7 @@ Double click the jar to run the application. If some features fail to work run u
 ```
 java -jar TextEditor.jar
 ```
+
+## Demo:
+
+![demo](demo/demo.gif)
